@@ -1,4 +1,4 @@
-name: Memos Build
+name: Memos Build Go
 
 on:
   workflow_dispatch:
