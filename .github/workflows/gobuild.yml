@@ -34,13 +34,15 @@ jobs:
         with:
           node-version: "18"
 
-
-
-
       - name: Build frontend (Windows)
         if: matrix.os == 'windows-latest'
         shell: pwsh
         run: |
+
+          cd memos/proto
+          npm install @bufbuild/buf
+          buf generate
+
           cd memos/web
           npm install -g pnpm 
           pnpm i --frozen-lockfile
@@ -51,6 +53,10 @@ jobs:
       - name: Build frontend (non-Windows)
         if: matrix.os != 'windows-latest'
         run: |
+          cd memos/proto
+          npm install @bufbuild/buf
+          buf generate
+
           cd memos/web
           npm install -g pnpm
           pnpm i --frozen-lockfile
