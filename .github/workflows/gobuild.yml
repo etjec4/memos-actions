@@ -40,7 +40,7 @@ jobs:
         run: |
 
           cd memos/proto
-          npm install @bufbuild/buf
+          npm install -g @bufbuild/buf
           buf generate
 
           cd memos/web
@@ -54,7 +54,7 @@ jobs:
         if: matrix.os != 'windows-latest'
         run: |
           cd memos/proto
-          npm install @bufbuild/buf
+          npm install -g @bufbuild/buf
           buf generate
 
           cd memos/web
