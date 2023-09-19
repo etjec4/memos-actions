@@ -51,7 +51,7 @@ jobs:
           cd memos/web
           npm install -g yarn
           yarn
-          yarnbuild
+          yarn build
           rm -rf ../server/dist
           mv dist ../server/
 
