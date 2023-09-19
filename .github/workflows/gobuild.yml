@@ -34,6 +34,27 @@ jobs:
         with:
           node-version: "18"
 
+      - name: Run frontend build
+      - uses: actions/checkout@v3
+      - uses: bufbuild/buf-setup-action@v1
+      - run: buf generate
+        working-directory: proto
+      - uses: pnpm/action-setup@v2.2.4
+        with:
+          version: 8
+      - uses: actions/setup-node@v3
+        with:
+          node-version: "18"
+          cache: pnpm
+          cache-dependency-path: "web/pnpm-lock.yaml"
+      - run: pnpm install
+        working-directory: web
+      
+      - run: pnpm build
+        working-directory: web
+
+
+
       - name: Build frontend (Windows)
         if: matrix.os == 'windows-latest'
         shell: pwsh
