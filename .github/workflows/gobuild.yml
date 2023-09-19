@@ -34,12 +34,6 @@ jobs:
         with:
           node-version: "18"
 
-      - name: Run frontend build
-      - uses: bufbuild/buf-setup-action@v1
-      - run: buf generate
-        working-directory: proto
-
-
 
 
 
