@@ -38,11 +38,11 @@ jobs:
         if: matrix.os == 'windows-latest'
         shell: pwsh
         run: |
-          home=$(pwd)
           cd memos/proto
           npm install -g @bufbuild/buf
           buf generate
-          cd $home
+          cd ..
+          cd ..
           cd memos/web
           npm install -g pnpm 
           pnpm i --frozen-lockfile
@@ -56,8 +56,8 @@ jobs:
           cd memos/proto
           npm install -g @bufbuild/buf
           buf generate
-          pwd
-
+          cd ..
+          cd ..
           cd memos/web
           npm install -g pnpm
           pnpm i --frozen-lockfile
