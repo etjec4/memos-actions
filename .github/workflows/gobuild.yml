@@ -41,9 +41,9 @@ jobs:
         shell: pwsh
         run: |
           cd memos/web
-          npm install -g yarn 
-          yarn
-          yarn build
+          npm install -g pnpm 
+          pnpm
+          pnpm build
           Remove-Item -Path ../server/dist -Recurse -Force
           mv dist ../server/
 
