@@ -40,7 +40,7 @@ jobs:
         run: |
           cd memos/web
           npm install -g pnpm 
-          pnpm
+          pnpm i --frozen-lockfile
           pnpm build
           Remove-Item -Path ../server/dist -Recurse -Force
           mv dist ../server/
@@ -50,7 +50,7 @@ jobs:
         run: |
           cd memos/web
           npm install -g pnpm
-          pnpm
+          pnpm i --frozen-lockfile
           pnpm build
           rm -rf ../server/dist
           mv dist ../server/
