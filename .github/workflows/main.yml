@@ -27,7 +27,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Clone Memos
-        run:  git clone https://github.com/usememos/memos.git  --branch release/0.17.0
+        run:  git clone https://github.com/usememos/memos.git  --branch release/0.18.1
 
       - name: Setup Node.js
         uses: actions/setup-node@v2
