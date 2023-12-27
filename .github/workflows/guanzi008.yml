@@ -86,7 +86,7 @@ jobs:
     - name: Build backend
       run: |
         cd memos
-        ls server
+        ls ./bin/memos
         ls server/frontend
         echo $PWD
         go build -o memos-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.os == 'windows-latest' && '.exe' || '' }} ./bin/memos/main.go
