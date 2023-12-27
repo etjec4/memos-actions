@@ -38,14 +38,17 @@ jobs:
       shell: pwsh
       run: |
         cd memos/web
+        cd 
         corepack enable
         npm install -g pnpm --force
         pnpm i --frozen-lockfile
-        pnpm type-gen
         pnpm build
+        pnpm type-gen
+
+        Move-Item ../server/frontend/dist ../server/frontend/dist.bak -Force -ErrorAction Stop
+        Move-Item  dist ../server/ -Force -ErrorAction Stop
+
         
-        Remove-Item -Path ../server/dist -Recurse -Force
-        mv dist ../server/
 
     - name: Build frontend (non-Windows)
       if: matrix.os != 'windows-latest'
@@ -56,8 +59,8 @@ jobs:
         pnpm i --frozen-lockfile
         pnpm type-gen
         pnpm build
-        rm -rf ../server/dist
-        mv dist ../server/
+        mv -f ../server/frontend/dist ../server/frontend/dist.bak
+        mv -f  dist ../server/
 
     - name: Setup Go
       uses: actions/setup-go@v2
@@ -81,6 +84,9 @@ jobs:
       run: |
         cd memos
         go build -o memos-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.os == 'windows-latest' && '.exe' || '' }} ./bin/memos/main.go
+        Remove-Item server/frontend/dist -Recurse -Force -ErrorAction SilentlyContinue
+        Move-Item server/frontend/dist.bak server/frontend/dist -Force -ErrorAction Stop
+
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v2
