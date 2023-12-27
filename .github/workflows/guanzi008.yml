@@ -41,8 +41,8 @@ jobs:
         corepack enable
         npm install -g pnpm --force
         pnpm i --frozen-lockfile
-        pnpm build
         pnpm type-gen
+        pnpm build
        
 
     - name: Build frontend (non-Windows)
@@ -77,6 +77,7 @@ jobs:
     - name: Build backend
       run: |
         cd memos
+        echo $PWD
         mv web/dist server/frontend/dist
         go build -o memos-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.os == 'windows-latest' && '.exe' || '' }} ./bin/memos/main.go
 
