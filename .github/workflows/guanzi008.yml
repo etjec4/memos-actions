@@ -44,7 +44,6 @@ jobs:
         pnpm type-gen
         pnpm build
        
-
     - name: Build frontend (non-Windows)
       if: matrix.os != 'windows-latest'
       run: |
@@ -54,8 +53,6 @@ jobs:
         pnpm i --frozen-lockfile
         pnpm type-gen
         pnpm build
-
-
     - name: Setup Go
       uses: actions/setup-go@v2
       with:
@@ -66,24 +63,21 @@ jobs:
       run: |
         choco install mingw
         echo ${{ matrix.cgo_env }} >> $GITHUB_ENV
-
     - name: Install gcc-aarch64-linux-gnu (Ubuntu ARM64)
       if: matrix.os == 'ubuntu-latest' && matrix.goarch == 'arm64'
       run: |
         sudo apt-get update
         sudo apt-get install -y gcc-aarch64-linux-gnu
         echo "CC=aarch64-linux-gnu-gcc" >> $GITHUB_ENV
-
     - name: Build backend
       run: |
         cd memos
+        echo $PWD
         ls web/dist
         mv web/dist server/frontend/dist
         ls web/dist
+        
         go build -o memos-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.os == 'windows-latest' && '.exe' || '' }} ./bin/memos/main.go
-
-
-
     - name: Upload artifacts
       uses: actions/upload-artifact@v2
       with:
