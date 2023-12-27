@@ -53,6 +53,7 @@ jobs:
         pnpm i --frozen-lockfile
         pnpm type-gen
         pnpm build
+        ls dist
     - name: Setup Go
       uses: actions/setup-go@v2
       with:
