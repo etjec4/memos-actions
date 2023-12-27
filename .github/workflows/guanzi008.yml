@@ -74,7 +74,7 @@ jobs:
       run: |
         cd memos
         echo $PWD
-        ls web/dist
+        ls web/dist/assets
         mv web/dist server/frontend/dist
         go build -o memos-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.os == 'windows-latest' && '.exe' || '' }} ./bin/memos/main.go
     - name: Upload artifacts
