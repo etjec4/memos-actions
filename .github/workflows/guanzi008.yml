@@ -75,8 +75,6 @@ jobs:
         echo $PWD
         ls web/dist
         mv web/dist server/frontend/dist
-        ls web/dist
-        
         go build -o memos-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.os == 'windows-latest' && '.exe' || '' }} ./bin/memos/main.go
     - name: Upload artifacts
       uses: actions/upload-artifact@v2
