@@ -9,8 +9,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest]
-        goarch: [amd64, arm64]
+        os: [ubuntu-latest]
+        goarch: [amd64]
         include:
           - os: windows-latest
             goos: windows
@@ -86,6 +86,8 @@ jobs:
     - name: Build backend
       run: |
         cd memos
+        ls
+        echo $PWD
         go build -o memos-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.os == 'windows-latest' && '.exe' || '' }} ./bin/memos/main.go
         Remove-Item server/frontend/dist -Recurse -Force -ErrorAction SilentlyContinue
         Move-Item server/frontend/dist.bak server/frontend/dist -Force -ErrorAction Stop
