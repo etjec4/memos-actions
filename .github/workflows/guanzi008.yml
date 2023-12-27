@@ -89,8 +89,8 @@ jobs:
         ls
         echo $PWD
         go build -o memos-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.os == 'windows-latest' && '.exe' || '' }} ./bin/memos/main.go
-        Remove-Item server/frontend/dist -Recurse -Force -ErrorAction SilentlyContinue
-        Move-Item server/frontend/dist.bak server/frontend/dist -Force -ErrorAction Stop
+        rm -rf server/frontend/dist
+        mv server/frontend/dist.bak server/frontend/dist
 
 
     - name: Upload artifacts
