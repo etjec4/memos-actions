@@ -9,7 +9,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-
+        os: [ubuntu-latest]
+        goarch: [amd64]
         include:
           - os: windows-latest
             goos: windows
