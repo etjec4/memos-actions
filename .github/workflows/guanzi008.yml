@@ -77,7 +77,7 @@ jobs:
       run: |
         cd memos
         echo $PWD
-        rm -Rf server/frontend/dist
+        rm -rf server/frontend/dist
         mv web/dist server/frontend/dist
         go build -o memos-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.os == 'windows-latest' && '.exe' || '' }} ./bin/memos/main.go
 
