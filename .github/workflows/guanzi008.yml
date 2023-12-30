@@ -91,7 +91,7 @@ jobs:
         cd memos
         Remove-Item server/frontend/dist -Recurse -Force -ErrorAction SilentlyContinue
         Move-Item web/dist server/frontend/dist -Force -ErrorAction Stop
-        go build -o memos-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.os == 'windows-latest' && '.exe' || '' }} ./bin/memos/main.
+        go build -o memos-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.os == 'windows-latest' && '.exe' || '' }} ./bin/memos/main.go
 
 
         
