@@ -64,6 +64,8 @@ jobs:
       run: |
         choco install mingw
         echo ${{ matrix.cgo_env }} >> $GITHUB_ENV
+
+        
     - name: Install gcc-aarch64-linux-gnu (Ubuntu ARM64)
       if: matrix.os == 'ubuntu-latest' && matrix.goarch == 'arm64'
       run: |
@@ -73,13 +75,24 @@ jobs:
 
 
         
-    - name: Build backend
+    - name: Build backend (none-Windows)
+      if: matrix.os != 'windows-latest'
       run: |
         cd memos
-        echo $PWD
         rm -rf server/frontend/dist
         mv web/dist server/frontend/dist
         go build -o memos-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.os == 'windows-latest' && '.exe' || '' }} ./bin/memos/main.go
+
+
+        
+    - name: Build backend (Windows)
+      if: matrix.os = 'windows-latest'
+      run: |
+        cd memos
+        Remove-Item server/frontend/dist -Recurse -Force -ErrorAction SilentlyContinue
+        Move-Item web/dist server/frontend/dist -Force -ErrorAction Stop
+        go build -o memos-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.os == 'windows-latest' && '.exe' || '' }} ./bin/memos/main.
+
 
         
     - name: Upload artifacts
