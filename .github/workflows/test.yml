@@ -84,6 +84,7 @@ jobs:
       run: |
         cd memos
         ls
+        rm -rf server/frontend/dist
         mv web/dist server/frontend/dist
         go build -o memos-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.os == 'windows-latest' && '.exe' || '' }} ./bin/memos/main.go
         ls
@@ -97,6 +98,7 @@ jobs:
       run: |
         cd memos
         ls
+        Remove-Item server/frontend/dist -Recurse -Force -ErrorAction SilentlyContinue
         Move-Item web/dist server/frontend/dist -Force -ErrorAction Stop
         go build -o memos-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.os == 'windows-latest' && '.exe' || '' }} ./bin/memos/main.go
         ls
