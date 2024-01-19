@@ -81,6 +81,7 @@ jobs:
         rm -rf server/frontend/dist
         ls web/dist
         mv web/dist server/frontend/dist
+        ls server/frontend/dist
         go build -o memos-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.os == 'windows-latest' && '.exe' || '' }} ./bin/memos/main.go
 
 
