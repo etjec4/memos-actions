@@ -77,8 +77,10 @@ jobs:
       if: matrix.os != 'windows-latest'
       run: |
         cd memos
+        ls server/frontend/dist
         rm -rf server/frontend/dist
-        mv web/dist server/frontend/
+        ls web/dist
+        mv web/dist server/frontend/dist
         go build -o memos-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.os == 'windows-latest' && '.exe' || '' }} ./bin/memos/main.go
 
 
@@ -89,7 +91,7 @@ jobs:
       run: |
         cd memos
         Remove-Item server/frontend/dist -Recurse -Force -ErrorAction SilentlyContinue
-        Move-Item web/dist server/frontend/ -Force -ErrorAction Stop
+        Move-Item web/dist server/frontend/dist -Force -ErrorAction Stop
         go build -o memos-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.os == 'windows-latest' && '.exe' || '' }} ./bin/memos/main.go
 
 
