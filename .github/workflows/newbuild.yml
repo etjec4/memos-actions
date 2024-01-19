@@ -77,7 +77,6 @@ jobs:
       if: matrix.os != 'windows-latest'
       run: |
         cd memos
-        ls server/frontend/dist
         ls server/frontend
         ls server
         mv -f "server/frontend/dist" "server/frontend/dist.bak"
