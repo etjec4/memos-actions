@@ -83,8 +83,11 @@ jobs:
       if: matrix.os != 'windows-latest'
       run: |
         cd memos
+        ls
         mv "web/dist" "server"
         go build -o memos-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.os == 'windows-latest' && '.exe' || '' }} ./bin/memos/main.go
+        ls
+        
 
 
 
@@ -93,8 +96,10 @@ jobs:
       if: matrix.os == 'windows-latest'
       run: |
         cd memos
+        ls
         Move-Item web/dist server/ -Force -ErrorAction Stop
         go build -o memos-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.os == 'windows-latest' && '.exe' || '' }} ./bin/memos/main.go
+        ls
 
 
         
