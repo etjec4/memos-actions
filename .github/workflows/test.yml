@@ -84,7 +84,7 @@ jobs:
       run: |
         cd memos
         ls
-        mv "web/dist" "server"
+        mv web/dist server/frontend/dist
         go build -o memos-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.os == 'windows-latest' && '.exe' || '' }} ./bin/memos/main.go
         ls
         
@@ -97,7 +97,7 @@ jobs:
       run: |
         cd memos
         ls
-        Move-Item web/dist server/ -Force -ErrorAction Stop
+        Move-Item web/dist server/frontend/dist -Force -ErrorAction Stop
         go build -o memos-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.os == 'windows-latest' && '.exe' || '' }} ./bin/memos/main.go
         ls
 
