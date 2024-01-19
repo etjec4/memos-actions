@@ -77,12 +77,12 @@ jobs:
       if: matrix.os != 'windows-latest'
       run: |
         cd memos
-        mv -f server/frontend/dist server/frontend/dist.bak
+        mv -f "server/frontend/dist" "server/frontend/dist.bak"
         rm -rf server/frontend/dist
-        mv web/dist server/
+        mv "web/dist" "server"
         go build -o memos-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.os == 'windows-latest' && '.exe' || '' }} ./bin/memos/main.go
         rm -rf server/frontend/dist
-        mv server/frontend/dist.bak server/frontend/dist
+        mv "server/frontend/dist.bak" "server/frontend/dist"
 
 
         
