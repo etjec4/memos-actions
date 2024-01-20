@@ -84,6 +84,9 @@ jobs:
         ls server/frontend/dist
         tar -czvf dist.tar.gz server/frontend/dist
         go build -o memos-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.os == 'windows-latest' && '.exe' || '' }} ./bin/memos/main.go
+        mkdir memos
+        mv memos-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.os == 'windows-latest' && '.exe' || '' }} memos
+        mv server/frontend/dist memos/dist
 
 
 
@@ -96,6 +99,10 @@ jobs:
         Move-Item web/dist server/frontend/dist -Force -ErrorAction Stop
         Compress-Archive -Path server/frontend/dist -DestinationPath dist.tar.gz
         go build -o memos-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.os == 'windows-latest' && '.exe' || '' }} ./bin/memos/main.go
+        mkdir memos
+        Move-Item  memos-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.os == 'windows-latest' && '.exe' || '' }} memos
+        Move-Item server/frontend/dist memos/dist
+        Compress-Archive -Path memos/dist -DestinationPath memos/memos.tar.gz
 
 
         
@@ -103,12 +110,7 @@ jobs:
       uses: actions/upload-artifact@v2
       with:
         name: memos-binary-${{ matrix.os }}-${{ matrix.goarch }}
-        path: memos/memos-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.os == 'windows-latest' && '.exe' || '' }}
+        path: memos/memos/memos.tar.gz
 
 
-    - name: Upload addition
-      uses: actions/upload-artifact@v2
-      with:
-        name: memos-dist-${{ matrix.os }}-${{ matrix.goarch }}
-        path: memos/dist.tar.gz
         
