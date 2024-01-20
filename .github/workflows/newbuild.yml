@@ -110,5 +110,5 @@ jobs:
       uses: actions/upload-artifact@v2
       with:
         name: memos-dist-${{ matrix.os }}-${{ matrix.goarch }}
-        path: memos/memos/dist.tar.gz
+        path: memos/dist.tar.gz
         
