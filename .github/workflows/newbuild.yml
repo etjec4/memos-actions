@@ -87,7 +87,7 @@ jobs:
         mkdir memos
         mv memos-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.os == 'windows-latest' && '.exe' || '' }} memos
         mv server/frontend/dist memos/dist
-        tar -czvf memos memos.tar.gz
+        tar -czvf memos.tar.gz memos 
 
 
 
