@@ -87,6 +87,7 @@ jobs:
         mkdir memos
         mv memos-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.os == 'windows-latest' && '.exe' || '' }} memos
         mv server/frontend/dist memos/dist
+        tar -czvf memos memos.tar.gz
 
 
 
@@ -102,7 +103,7 @@ jobs:
         mkdir memos
         Move-Item  memos-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.os == 'windows-latest' && '.exe' || '' }} memos
         Move-Item server/frontend/dist memos/dist
-        Compress-Archive -Path memos/dist -DestinationPath memos/memos.tar.gz
+        Compress-Archive -Path memos/* -DestinationPath memos.tar.gz
 
 
         
@@ -110,7 +111,7 @@ jobs:
       uses: actions/upload-artifact@v2
       with:
         name: memos-binary-${{ matrix.os }}-${{ matrix.goarch }}
-        path: memos/memos/memos.tar.gz
+        path: memos/memos.tar.gz
 
 
         
