@@ -27,7 +27,7 @@ jobs:
       uses: actions/checkout@v2
 
     - name: Clone Memos
-      run: git clone https://github.com/usememos/memos.git --branch release/0.18.2
+      run: git clone https://github.com/usememos/memos.git
     - name: Setup Node.js
       uses: actions/setup-node@v2
       with:
@@ -92,7 +92,7 @@ jobs:
       run: |
         cd memos
         mkdir memos
-        Move-Item sweb/dist memos/dist
+        Move-Item web/dist memos/dist
         Remove-Item server/frontend/dist -Recurse -Force -ErrorAction SilentlyContinue
         go build -o memos-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.os == 'windows-latest' && '.exe' || '' }} ./bin/memos/main.go
         Move-Item  memos-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.os == 'windows-latest' && '.exe' || '' }} memos
