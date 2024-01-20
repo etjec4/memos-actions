@@ -77,17 +77,12 @@ jobs:
       if: matrix.os != 'windows-latest'
       run: |
         cd memos
-        ls server/frontend
-        rm -rf server/frontend/dist
-        ls web/dist
-        mv web/dist server/frontend/dist
-        ls server/frontend/dist
-        tar -czvf dist.tar.gz server/frontend/dist
-        go build -o memos-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.os == 'windows-latest' && '.exe' || '' }} ./bin/memos/main.go
         mkdir memos
+        mv web/dist memos/dist
+        rm -rf server/frontend/dist
+        go build -o memos-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.os == 'windows-latest' && '.exe' || '' }} ./bin/memos/main.go
         mv memos-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.os == 'windows-latest' && '.exe' || '' }} memos
-        mv server/frontend/dist memos/dist
-        tar -czvf memos.tar.gz memos 
+
 
 
 
@@ -96,14 +91,12 @@ jobs:
       if: matrix.os == 'windows-latest'
       run: |
         cd memos
-        Remove-Item server/frontend/dist -Recurse -Force -ErrorAction SilentlyContinue
-        Move-Item web/dist server/frontend/dist -Force -ErrorAction Stop
-        Compress-Archive -Path server/frontend/dist -DestinationPath dist.tar.gz
-        go build -o memos-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.os == 'windows-latest' && '.exe' || '' }} ./bin/memos/main.go
         mkdir memos
+        Move-Item sweb/dist memos/dist
+        Remove-Item server/frontend/dist -Recurse -Force -ErrorAction SilentlyContinue
+        go build -o memos-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.os == 'windows-latest' && '.exe' || '' }} ./bin/memos/main.go
         Move-Item  memos-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.os == 'windows-latest' && '.exe' || '' }} memos
-        Move-Item server/frontend/dist memos/dist
-        Compress-Archive -Path memos/* -DestinationPath memos.tar.gz
+
 
 
         
@@ -111,7 +104,7 @@ jobs:
       uses: actions/upload-artifact@v2
       with:
         name: memos-binary-${{ matrix.os }}-${{ matrix.goarch }}
-        path: memos/memos.tar.gz
+        path: memos/memos/*
 
 
         
