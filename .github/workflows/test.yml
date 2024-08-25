@@ -1,44 +1,147 @@
+name: Build
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        include:
+          - os: ubuntu-latest
+            goos: linux
+            goarch: amd64
+          - os: windows-latest
+            goos: windows
+            goarch: amd64
+          - os: macos-latest
+            goos: darwin
+            goarch: amd64
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.22'
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '20'
+
+    - name: Set up pnpm
+      uses: pnpm/action-setup@v2
+      with:
+        version: 9
+
     - name: Build frontend
-      shell: pwsh
+      shell: bash
       run: |
-        if (Test-Path "web") {
-          cd web
-        } elseif (Test-Path "frontend") {
-          cd frontend
-        } else {
-          Write-Host "Cannot find web or frontend directory. Skipping frontend build."
-          exit 0
-        }
-        pnpm install --frozen-lockfile
-        pnpm build
+        if [ "$RUNNER_OS" == "Windows" ]; then
+          pwsh -Command "
+            if (Test-Path 'web') {
+              cd web
+            } elseif (Test-Path 'frontend') {
+              cd frontend
+            } else {
+              Write-Host 'Cannot find web or frontend directory. Skipping frontend build.'
+              exit 0
+            }
+            pnpm install --frozen-lockfile
+            pnpm build
+          "
+        else
+          if [ -d "web" ]; then
+            cd web
+          elif [ -d "frontend" ]; then
+            cd frontend
+          else
+            echo "Cannot find web or frontend directory. Skipping frontend build."
+            exit 0
+          fi
+          pnpm install --frozen-lockfile
+          pnpm build
+        fi
 
     - name: Build backend
-      shell: pwsh
+      shell: bash
+      env:
+        GOOS: ${{ matrix.goos }}
+        GOARCH: ${{ matrix.goarch }}
+        CGO_ENABLED: 0
       run: |
-        if (Test-Path "go.mod") {
-          go mod tidy
-          if (Test-Path "main.go") {
-            go build -o "memos-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.goos == 'windows' && '.exe' || '' }}" ./main.go
-          } elseif (Test-Path "cmd/memos/main.go") {
-            go build -o "memos-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.goos == 'windows' && '.exe' || '' }}" ./cmd/memos/main.go
-          } else {
-            Write-Host "Cannot find main.go"
-            exit 1
-          }
-        } else {
-          Write-Host "Cannot find go.mod file. Skipping backend build."
-          exit 0
-        }
+        if [ "$RUNNER_OS" == "Windows" ]; then
+          pwsh -Command "
+            if (Test-Path 'go.mod') {
+              go mod tidy
+              if (Test-Path 'main.go') {
+                go build -o 'memos-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.goos == 'windows' && '.exe' || '' }}' ./main.go
+              } elseif (Test-Path 'cmd/memos/main.go') {
+                go build -o 'memos-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.goos == 'windows' && '.exe' || '' }}' ./cmd/memos/main.go
+              } else {
+                Write-Host 'Cannot find main.go'
+                exit 1
+              }
+            } else {
+              Write-Host 'Cannot find go.mod file. Skipping backend build.'
+              exit 0
+            }
+          "
+        else
+          if [ -f "go.mod" ]; then
+            go mod tidy
+            if [ -f "main.go" ]; then
+              go build -o "memos-${{ matrix.goos }}-${{ matrix.goarch }}" ./main.go
+            elif [ -f "cmd/memos/main.go" ]; then
+              go build -o "memos-${{ matrix.goos }}-${{ matrix.goarch }}" ./cmd/memos/main.go
+            else
+              echo "Cannot find main.go"
+              exit 1
+            fi
+          else
+            echo "Cannot find go.mod file. Skipping backend build."
+            exit 0
+          fi
+        fi
 
     - name: Prepare artifact
-      shell: pwsh
+      shell: bash
       run: |
-        New-Item -Path "artifact/memos" -ItemType Directory -Force
-        if (Test-Path "memos-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.goos == 'windows' && '.exe' || '' }}") {
-          Move-Item "memos-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.goos == 'windows' && '.exe' || '' }}" "artifact/memos/"
-        }
-        if (Test-Path "web/dist") {
-          Move-Item "web/dist" "artifact/memos/"
-        } elseif (Test-Path "frontend/dist") {
-          Move-Item "frontend/dist" "artifact/memos/"
-        }
+        if [ "$RUNNER_OS" == "Windows" ]; then
+          pwsh -Command "
+            New-Item -Path 'artifact/memos' -ItemType Directory -Force
+            if (Test-Path 'memos-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.goos == 'windows' && '.exe' || '' }}') {
+              Move-Item 'memos-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.goos == 'windows' && '.exe' || '' }}' 'artifact/memos/'
+            }
+            if (Test-Path 'web/dist') {
+              Move-Item 'web/dist' 'artifact/memos/'
+            } elseif (Test-Path 'frontend/dist') {
+              Move-Item 'frontend/dist' 'artifact/memos/'
+            }
+          "
+        else
+          mkdir -p artifact/memos
+          if [ -f "memos-${{ matrix.goos }}-${{ matrix.goarch }}" ]; then
+            mv "memos-${{ matrix.goos }}-${{ matrix.goarch }}" artifact/memos/
+          fi
+          if [ -d "web/dist" ]; then
+            mv web/dist artifact/memos/
+          elif [ -d "frontend/dist" ]; then
+            mv frontend/dist artifact/memos/
+          fi
+        fi
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: memos-${{ matrix.goos }}-${{ matrix.goarch }}
+        path: artifact/memos
+
