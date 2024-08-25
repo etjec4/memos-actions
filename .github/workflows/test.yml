@@ -1,81 +1,90 @@
-name: TEST
+name: Build and Test
+
 on:
-  workflow_dispatch:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
 jobs:
   build:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        include:
-          - os: ubuntu-latest
-            goos: linux
-            goarch: amd64
-          - os: ubuntu-latest
-            goos: linux
-            goarch: arm64
-          - os: macos-latest
-            goos: darwin
-            goarch: amd64
-          - os: macos-latest
-            goos: darwin
-            goarch: arm64
-          - os: windows-latest
-            goos: windows
-            goarch: amd64
-
-    env:
-      GOOS: ${{ matrix.goos }}
-      GOARCH: ${{ matrix.goarch }}
-      CGO_ENABLED: 0
+    runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v3
+    - uses: actions/checkout@v3
 
     - name: Setup Node.js
       uses: actions/setup-node@v3
       with:
-        node-version: '18.12'
+        node-version: '16'
 
-    - name: Setup pnpm
+    - name: Install pnpm
       uses: pnpm/action-setup@v2
       with:
-        version: 8
+        version: 6.0.2
 
-    - name: Setup Go
-      uses: actions/setup-go@v4
-      with:
-        go-version: '1.21.4'
+    - name: List directory contents
+      run: |
+        echo "Current directory:"
+        pwd
+        echo "Directory contents:"
+        ls -la
+        echo "All directories recursively:"
+        find . -type d
+
+    - name: Find package.json files
+      run: |
+        echo "Locating all package.json files:"
+        find . -name package.json -type f
 
     - name: Display package.json contents
       run: |
-        cd web
-        cat package.json
+        echo "Contents of all package.json files:"
+        find . -name package.json -type f -print -exec cat {} \;
+
+    - name: Locate and enter web directory
+      run: |
+        if [ -d "web" ]; then
+          echo "Web directory found in root"
+          cd web
+        elif [ -d "memos/web" ]; then
+          echo "Web directory found in memos subfolder"
+          cd memos/web
+        else
+          echo "Web directory not found"
+          exit 1
+        fi
+        echo "Current directory after cd:"
+        pwd
+        echo "Directory contents:"
+        ls -la
+
+    - name: Install dependencies
+      run: |
+        if [ -f "package.json" ]; then
+          echo "Installing dependencies"
+          pnpm install --frozen-lockfile
+        else
+          echo "package.json not found in web directory"
+          exit 1
+        fi
 
     - name: Build frontend
       run: |
-        cd web
-        pnpm install --frozen-lockfile
-        pnpm run build
+        if [ -f "package.json" ]; then
+          echo "Building frontend"
+          pnpm run build
+        else
+          echo "package.json not found in web directory"
+          exit 1
+        fi
 
-
-    - name: Install cross-compilation tools (Ubuntu ARM64)
-      if: matrix.os == 'ubuntu-latest' && matrix.goarch == 'arm64'
+    - name: Run tests
       run: |
-        sudo apt-get update
-        sudo apt-get install -y gcc-aarch64-linux-gnu
-        echo "CC=aarch64-linux-gnu-gcc" >> $GITHUB_ENV
-
-    - name: Build backend
-      run: |
-        mkdir -p memos/dist
-        cp -r web/dist/* memos/dist/
-        go build -o memos/memos-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.goos == 'windows' && '.exe' || '' }} ./bin/memos/main.go
-
-    - name: Upload artifacts
-      uses: actions/upload-artifact@v3
-      with:
-        name: memos-binary-${{ matrix.goos }}-${{ matrix.goarch }}
-        path: memos/*
-
+        if [ -f "package.json" ]; then
+          echo "Running tests"
+          pnpm test
+        else
+          echo "package.json not found in web directory"
+          exit 1
+        fi
