@@ -1,5 +1,4 @@
-name: Memos Build New
-
+name: TEST
 on:
   workflow_dispatch:
 
