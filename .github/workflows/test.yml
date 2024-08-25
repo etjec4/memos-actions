@@ -32,11 +32,6 @@ jobs:
         echo "All directories recursively:"
         find . -type d
 
-    - name: Display project structure
-      run: |
-        echo "Project structure:"
-        tree -L 3 || find . -maxdepth 3 -type d
-
     - name: Find package.json files
       run: |
         echo "Locating all package.json files:"
@@ -47,34 +42,20 @@ jobs:
         echo "Contents of all package.json files:"
         find . -name package.json -type f -print -exec cat {} \;
 
-    - name: Locate and enter web directory
+    - name: Locate and enter directory with package.json
       run: |
-        if [ -d "web" ]; then
-          echo "Web directory found in root"
-          cd web
-        elif [ -d "memos/web" ]; then
-          echo "Web directory found in memos subfolder"
-          cd memos/web
-        elif [ -d "frontend" ]; then
-          echo "Frontend directory found in root"
-          cd frontend
-        elif [ -d "client" ]; then
-          echo "Client directory found in root"
-          cd client
+        PACKAGE_JSON_DIR=$(find . -name package.json -type f -print0 | xargs -0 -n1 dirname | sort -u | head -n1)
+        if [ -n "$PACKAGE_JSON_DIR" ]; then
+          echo "Directory with package.json found: $PACKAGE_JSON_DIR"
+          cd "$PACKAGE_JSON_DIR"
         else
-          echo "Web/Frontend/Client directory not found"
+          echo "No directory with package.json found"
           exit 1
         fi
         echo "Current directory after cd:"
         pwd
         echo "Directory contents:"
         ls -la
-
-    - name: Find package.json location
-      if: failure()
-      run: |
-        echo "Searching for package.json:"
-        find . -name package.json
 
     - name: Install dependencies
       run: |
