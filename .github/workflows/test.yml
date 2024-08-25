@@ -2,7 +2,7 @@ name: Memos Build
 
 on:
   workflow_dispatch:
-
+ 
 jobs:
   build:
     runs-on: ${{ matrix.os }}
