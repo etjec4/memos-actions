@@ -1,7 +1,11 @@
-name: Memos Build New
+name: Memos Build
+
+
 
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - main
 
 jobs:
   build:
@@ -19,7 +23,7 @@ jobs:
     env:
       GOOS: ${{ matrix.goos }}
       GOARCH: ${{ matrix.goarch }}
-      CGO_ENABLED: 0
+      CGO_ENABLED: 1
 
     steps:
     - name: Checkout repository
@@ -38,29 +42,24 @@ jobs:
       shell: pwsh
       run: |
         cd memos/web
+        corepack enable
         npm install -g pnpm --force
         pnpm i --frozen-lockfile
-        # 检查 type-gen 脚本是否存在
-        if (Get-Content package.json | Select-String '"type-gen":') {
-          pnpm type-gen
-        } else {
-          echo "type-gen script not found, skipping..."
-        }
-        pnpm build
-       
+        pnpm build # Remove-Item -Path ../server/dist -Recurse -Force
+        Move-Item -Path dist -Destination ../server/dist
+       # mv dist ../server/dist
+        
+
     - name: Build frontend (non-Windows)
       if: matrix.os != 'windows-latest'
       run: |
         cd memos/web
+        corepack enable
         npm install -g pnpm --force
         pnpm i --frozen-lockfile
-        # 检查 type-gen 脚本是否存在
-        if grep -q '"type-gen":' package.json; then
-          pnpm type-gen
-        else
-          echo "type-gen script not found, skipping..."
-        fi
         pnpm build
+        rm -rf ../server/dist
+        mv dist ../server/
 
     - name: Setup Go
       uses: actions/setup-go@v2
@@ -72,37 +71,21 @@ jobs:
       run: |
         choco install mingw
         echo ${{ matrix.cgo_env }} >> $GITHUB_ENV
-        
+
     - name: Install gcc-aarch64-linux-gnu (Ubuntu ARM64)
       if: matrix.os == 'ubuntu-latest' && matrix.goarch == 'arm64'
       run: |
         sudo apt-get update
         sudo apt-get install -y gcc-aarch64-linux-gnu
         echo "CC=aarch64-linux-gnu-gcc" >> $GITHUB_ENV
-        
-    - name: Build backend (non-Windows)
-      if: matrix.os != 'windows-latest'
+
+    - name: Build backend
       run: |
         cd memos
-        mkdir memos
-        mv web/dist memos/dist
-        rm -rf server/frontend/dist
         go build -o memos-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.os == 'windows-latest' && '.exe' || '' }} ./bin/memos/main.go
-        mv memos-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.os == 'windows-latest' && '.exe' || '' }} memos
-        
-    - name: Build backend (Windows)
-      if: matrix.os == 'windows-latest'
-      run: |
-        cd memos
-        mkdir memos
-        Move-Item web/dist memos/dist
-        Remove-Item server/frontend/dist -Recurse -Force -ErrorAction SilentlyContinue
-        go build -o memos-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.os == 'windows-latest' && '.exe' || '' }} ./bin/memos/main.go
-        Move-Item  memos-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.os == 'windows-latest' && '.exe' || '' }} memos
-        
+
     - name: Upload artifacts
       uses: actions/upload-artifact@v2
       with:
         name: memos-binary-${{ matrix.os }}-${{ matrix.goarch }}
-        path: memos/memos/*
-
+        path: memos/memos-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.os == 'windows-latest' && '.exe' || '' }}
