@@ -1,88 +1,98 @@
-name: Build Memos
+name: Memos Build New
 
 on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        goarch: [amd64, arm64]
+        include:
+          - os: windows-latest
+            goos: windows
+            goarch: amd64
+            cgo_env: CC=x86_64-w64-mingw32-gcc
+
+    env:
+      GOOS: ${{ matrix.goos }}
+      GOARCH: ${{ matrix.goarch }}
+      CGO_ENABLED: 0
 
     steps:
-    - uses: actions/checkout@v3
+    - name: Checkout repository
+      uses: actions/checkout@v2
 
-    - name: Set up Go
-      uses: actions/setup-go@v4
+    - name: Clone Memos
+      run: git clone https://github.com/usememos/memos.git
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v2
       with:
-        go-version: '1.22'
+        node-version: '18.12'
 
-    - name: Set up Node.js
-      uses: actions/setup-node@v3
+    - name: Build frontend (Windows)
+      if: matrix.os == 'windows-latest'
+      shell: pwsh
+      run: |
+        cd memos/web
+        npm install -g pnpm --force
+        pnpm i --frozen-lockfile
+        pnpm type-gen
+        pnpm build
+       
+    - name: Build frontend (non-Windows)
+      if: matrix.os != 'windows-latest'
+      run: |
+        cd memos/web
+        npm install -g pnpm --force
+        pnpm i --frozen-lockfile
+        pnpm type-gen
+        pnpm build
+
+    - name: Setup Go
+      uses: actions/setup-go@v2
       with:
-        node-version: '20'
+        go-version: '1.21.4'
 
-    - name: Set up pnpm
-      uses: pnpm/action-setup@v2
+    - name: Install mingw-w64 (Windows)
+      if: matrix.os == 'windows-latest'
+      run: |
+        choco install mingw
+        echo ${{ matrix.cgo_env }} >> $GITHUB_ENV
+        
+    - name: Install gcc-aarch64-linux-gnu (Ubuntu ARM64)
+      if: matrix.os == 'ubuntu-latest' && matrix.goarch == 'arm64'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y gcc-aarch64-linux-gnu
+        echo "CC=aarch64-linux-gnu-gcc" >> $GITHUB_ENV
+        
+    - name: Build backend (non-Windows)
+      if: matrix.os != 'windows-latest'
+      run: |
+        cd memos
+        mkdir memos
+        mv web/dist memos/dist
+        rm -rf server/frontend/dist
+        go build -o memos-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.os == 'windows-latest' && '.exe' || '' }} ./bin/memos/main.go
+        mv memos-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.os == 'windows-latest' && '.exe' || '' }} memos
+        
+    - name: Build backend (Windows)
+      if: matrix.os == 'windows-latest'
+      run: |
+        cd memos
+        mkdir memos
+        Move-Item web/dist memos/dist
+        Remove-Item server/frontend/dist -Recurse -Force -ErrorAction SilentlyContinue
+        go build -o memos-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.os == 'windows-latest' && '.exe' || '' }} ./bin/memos/main.go
+        Move-Item  memos-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.os == 'windows-latest' && '.exe' || '' }} memos
+        
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v2
       with:
-        version: 9
+        name: memos-binary-${{ matrix.os }}-${{ matrix.goarch }}
+        path: memos/memos/*
 
-    - name: List directory contents
-      run: |
-        pwd
-        ls -laR
-
-    - name: Build Frontend
-      run: |
-        if [ -d "web" ]; then
-          cd web
-          pnpm install --frozen-lockfile
-          pnpm build
-        elif [ -d "frontend" ]; then
-          cd frontend
-          pnpm install --frozen-lockfile
-          pnpm build
-        else
-          echo "Cannot find web or frontend directory. Skipping frontend build."
-        fi
-
-    - name: Build Backend
-      env:
-        GOOS: linux
-        GOARCH: amd64
-        CGO_ENABLED: 0
-      run: |
-        if [ -f "go.mod" ]; then
-          go mod tidy
-          if [ -f "main.go" ]; then
-            go build -o "memos-linux-amd64" ./main.go
-          elif [ -f "cmd/memos/main.go" ]; then
-            go build -o "memos-linux-amd64" ./cmd/memos/main.go
-          else
-            echo "Cannot find main.go"
-            exit 1
-          fi
-        else
-          echo "Cannot find go.mod file. Skipping backend build."
-        fi
-
-    - name: Prepare artifacts
-      run: |
-        mkdir -p artifact/memos
-        if [ -f "memos-linux-amd64" ]; then
-          mv "memos-linux-amd64" artifact/memos/
-        fi
-        if [ -d "web/dist" ]; then
-          mv web/dist artifact/memos/
-        elif [ -d "frontend/dist" ]; then
-          mv frontend/dist artifact/memos/
-        fi
-        ls -R artifact
-
-    - name: Upload artifact
-      uses: actions/upload-artifact@v3
-      with:
-        name: memos-linux-amd64
-        path: artifact/memos
-        if-no-files-found: warn
