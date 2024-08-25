@@ -1,4 +1,4 @@
-name: Build and Release
+name: Build Memos
 
 on:
   push:
@@ -26,12 +26,12 @@ jobs:
     - name: Set up pnpm
       uses: pnpm/action-setup@v2
       with:
-        version: '9'
+        version: 9
 
     - name: List directory contents
       run: |
         pwd
-        ls -R
+        ls -laR
 
     - name: Build Frontend
       run: |
@@ -48,6 +48,10 @@ jobs:
         fi
 
     - name: Build Backend
+      env:
+        GOOS: linux
+        GOARCH: amd64
+        CGO_ENABLED: 0
       run: |
         if [ -f "go.mod" ]; then
           go mod tidy
@@ -62,12 +66,8 @@ jobs:
         else
           echo "Cannot find go.mod file. Skipping backend build."
         fi
-      env:
-        GOOS: linux
-        GOARCH: amd64
-        CGO_ENABLED: 0
 
-    - name: Prepare Artifact
+    - name: Prepare artifacts
       run: |
         mkdir -p artifact/memos
         if [ -f "memos-linux-amd64" ]; then
@@ -80,10 +80,9 @@ jobs:
         fi
         ls -R artifact
 
-    - name: Upload Artifact
+    - name: Upload artifact
       uses: actions/upload-artifact@v3
       with:
         name: memos-linux-amd64
         path: artifact/memos
         if-no-files-found: warn
-
