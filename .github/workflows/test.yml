@@ -48,12 +48,17 @@ jobs:
       with:
         go-version: '1.21.4'
 
+    - name: Display package.json contents
+      run: |
+        cd web
+        cat package.json
+
     - name: Build frontend
       run: |
         cd web
         pnpm install --frozen-lockfile
-        pnpm type-gen
-        pnpm build
+        pnpm run build
+
 
     - name: Install cross-compilation tools (Ubuntu ARM64)
       if: matrix.os == 'ubuntu-latest' && matrix.goarch == 'arm64'
