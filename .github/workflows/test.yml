@@ -1,5 +1,4 @@
-name: Memos Build Test
-
+name: Memos Build New
 
 on:
   workflow_dispatch:
@@ -9,13 +8,22 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest]
-        goarch: [amd64]
         include:
+          - os: ubuntu-latest
+            goos: linux
+            goarch: amd64
+          - os: ubuntu-latest
+            goos: linux
+            goarch: arm64
+          - os: macos-latest
+            goos: darwin
+            goarch: amd64
+          - os: macos-latest
+            goos: darwin
+            goarch: arm64
           - os: windows-latest
             goos: windows
             goarch: amd64
-            cgo_env: CC=x86_64-w64-mingw32-gcc
 
     env:
       GOOS: ${{ matrix.goos }}
@@ -24,89 +32,46 @@ jobs:
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
-    - name: Clone Memos
-      run: git clone https://github.com/usememos/memos.git --branch release/0.18.1
     - name: Setup Node.js
-      uses: actions/setup-node@v2
+      uses: actions/setup-node@v3
       with:
-        node-version: '16.20.2'
+        node-version: '18.12'
 
-    - name: Build frontend (Windows)
-      if: matrix.os == 'windows-latest'
-      shell: pwsh
-      run: |
-        cd memos/web
-        ls
-        corepack enable
-        npm install -g pnpm --force
-        pnpm i --frozen-lockfile
-        pnpm type-gen
-        pnpm build
-        ls
-       
-    - name: Build frontend (non-Windows)
-      if: matrix.os != 'windows-latest'
-      run: |
-        cd memos/web
-        ls
-        corepack enable
-        npm install -g pnpm --force
-        pnpm i --frozen-lockfile
-        pnpm type-gen
-        pnpm build
-        ls
+    - name: Setup pnpm
+      uses: pnpm/action-setup@v2
+      with:
+        version: 8
 
     - name: Setup Go
-      uses: actions/setup-go@v2
+      uses: actions/setup-go@v4
       with:
         go-version: '1.21.4'
 
-    - name: Install mingw-w64 (Windows)
-      if: matrix.os == 'windows-latest'
+    - name: Build frontend
       run: |
-        choco install mingw
-        echo ${{ matrix.cgo_env }} >> $GITHUB_ENV
+        cd web
+        pnpm install --frozen-lockfile
+        pnpm type-gen
+        pnpm build
 
-        
-    - name: Install gcc-aarch64-linux-gnu (Ubuntu ARM64)
+    - name: Install cross-compilation tools (Ubuntu ARM64)
       if: matrix.os == 'ubuntu-latest' && matrix.goarch == 'arm64'
       run: |
         sudo apt-get update
         sudo apt-get install -y gcc-aarch64-linux-gnu
         echo "CC=aarch64-linux-gnu-gcc" >> $GITHUB_ENV
 
-
-        
-    - name: Build backend (none-Windows)
-      if: matrix.os != 'windows-latest'
+    - name: Build backend
       run: |
-        cd memos
-        ls
-        rm -rf server/frontend/dist
-        mv web/dist server/frontend/dist
-        go build -o memos-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.os == 'windows-latest' && '.exe' || '' }} ./bin/memos/main.go
-        ls
-        
+        mkdir -p memos/dist
+        cp -r web/dist/* memos/dist/
+        go build -o memos/memos-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.goos == 'windows' && '.exe' || '' }} ./bin/memos/main.go
 
-
-
-        
-    - name: Build backend (Windows)
-      if: matrix.os == 'windows-latest'
-      run: |
-        cd memos
-        ls
-        Remove-Item server/frontend/dist -Recurse -Force -ErrorAction SilentlyContinue
-        Move-Item web/dist server/frontend/dist -Force -ErrorAction Stop
-        go build -o memos-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.os == 'windows-latest' && '.exe' || '' }} ./bin/memos/main.go
-        ls
-
-
-        
     - name: Upload artifacts
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
-        name: memos-binary-${{ matrix.os }}-${{ matrix.goarch }}
-        path: memos/memos-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.os == 'windows-latest' && '.exe' || '' }}
+        name: memos-binary-${{ matrix.goos }}-${{ matrix.goarch }}
+        path: memos/*
+
