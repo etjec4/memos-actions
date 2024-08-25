@@ -40,7 +40,12 @@ jobs:
         cd memos/web
         npm install -g pnpm --force
         pnpm i --frozen-lockfile
-        pnpm type-gen
+        # 检查 type-gen 脚本是否存在
+        if (Get-Content package.json | Select-String '"type-gen":') {
+          pnpm type-gen
+        } else {
+          echo "type-gen script not found, skipping..."
+        }
         pnpm build
        
     - name: Build frontend (non-Windows)
@@ -49,7 +54,12 @@ jobs:
         cd memos/web
         npm install -g pnpm --force
         pnpm i --frozen-lockfile
-        pnpm type-gen
+        # 检查 type-gen 脚本是否存在
+        if grep -q '"type-gen":' package.json; then
+          pnpm type-gen
+        else
+          echo "type-gen script not found, skipping..."
+        fi
         pnpm build
 
     - name: Setup Go
