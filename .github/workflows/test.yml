@@ -1,4 +1,4 @@
-name: Build
+name: Build and Release
 
 on:
   push:
@@ -8,21 +8,7 @@ on:
 
 jobs:
   build:
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-        include:
-          - os: ubuntu-latest
-            goos: linux
-            goarch: amd64
-          - os: windows-latest
-            goos: windows
-            goarch: amd64
-          - os: macos-latest
-            goos: darwin
-            goarch: amd64
-
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v3
@@ -40,14 +26,14 @@ jobs:
     - name: Set up pnpm
       uses: pnpm/action-setup@v2
       with:
-        version: 9
+        version: '9'
 
-    - name: Debug - List directory contents
+    - name: List directory contents
       run: |
         pwd
         ls -R
 
-    - name: Build frontend
+    - name: Build Frontend
       run: |
         if [ -d "web" ]; then
           cd web
@@ -61,18 +47,14 @@ jobs:
           echo "Cannot find web or frontend directory. Skipping frontend build."
         fi
 
-    - name: Build backend
-      env:
-        GOOS: ${{ matrix.goos }}
-        GOARCH: ${{ matrix.goarch }}
-        CGO_ENABLED: 0
+    - name: Build Backend
       run: |
         if [ -f "go.mod" ]; then
           go mod tidy
           if [ -f "main.go" ]; then
-            go build -o "memos-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.goos == 'windows' && '.exe' || '' }}" ./main.go
+            go build -o "memos-linux-amd64" ./main.go
           elif [ -f "cmd/memos/main.go" ]; then
-            go build -o "memos-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.goos == 'windows' && '.exe' || '' }}" ./cmd/memos/main.go
+            go build -o "memos-linux-amd64" ./cmd/memos/main.go
           else
             echo "Cannot find main.go"
             exit 1
@@ -80,12 +62,16 @@ jobs:
         else
           echo "Cannot find go.mod file. Skipping backend build."
         fi
+      env:
+        GOOS: linux
+        GOARCH: amd64
+        CGO_ENABLED: 0
 
-    - name: Debug - List artifact directory
+    - name: Prepare Artifact
       run: |
         mkdir -p artifact/memos
-        if [ -f "memos-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.goos == 'windows' && '.exe' || '' }}" ]; then
-          mv "memos-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.goos == 'windows' && '.exe' || '' }}" artifact/memos/
+        if [ -f "memos-linux-amd64" ]; then
+          mv "memos-linux-amd64" artifact/memos/
         fi
         if [ -d "web/dist" ]; then
           mv web/dist artifact/memos/
@@ -94,10 +80,10 @@ jobs:
         fi
         ls -R artifact
 
-    - name: Upload artifact
+    - name: Upload Artifact
       uses: actions/upload-artifact@v3
       with:
-        name: memos-${{ matrix.goos }}-${{ matrix.goarch }}
+        name: memos-linux-amd64
         path: artifact/memos
-        if-no-files-found: error
+        if-no-files-found: warn
 
