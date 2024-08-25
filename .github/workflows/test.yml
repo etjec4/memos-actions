@@ -56,7 +56,7 @@ jobs:
         pwd
         echo "Directory contents:"
         ls -la
-
+        
     - name: Install dependencies
       run: |
         if [ -f "package.json" ]; then
